@@ -1,0 +1,63 @@
+{
+    "name": "mlaroy/scout",
+    "description": "Scout — an AI content assistant and write pipeline for Statamic",
+    "keywords": [
+        "statamic",
+        "assistant",
+        "ai"
+    ],
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Michael LaRoy",
+            "email": "michael@cascadia.digital"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "statamic/cms": "^6.19"
+    },
+    "require-dev": {
+        "laravel/mcp": "^0.3",
+        "laravel/pint": "^1.24",
+        "orchestra/testbench": "^10.0",
+        "phpunit/phpunit": "^11.5"
+    },
+    "suggest": {
+        "laravel/mcp": "Registers Scout's validate-page-plan and assemble-page tools with Laravel Boost's MCP server"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cascadia\\Scout\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cascadia\\Scout\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "lint": "vendor/bin/pint",
+        "test": "vendor/bin/phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "pixelfear/composer-dist-plugin": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "statamic": {
+            "name": "Scout",
+            "description": "AI content assistant and write pipeline for Statamic"
+        },
+        "laravel": {
+            "providers": [
+                "Cascadia\\Scout\\ServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

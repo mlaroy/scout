@@ -1,0 +1,91 @@
+# Scout
+
+An AI content assistant for the Statamic control panel, with a validated write pipeline underneath it. Scout goes by a Sasquatch's reputation: rarely seen working, reliably leaves finished drafts behind.
+
+Editors get a chat bubble in the control panel (and a full page under **System → Assistant**) where they can paste rough content and get back an unpublished draft page, ask which content structure suits a piece of content, or revise a draft conversationally ("make the hero dark and drop the stats section").
+
+## How it writes
+
+Everything Scout writes goes through the **write pipeline** — `PagePlanValidator` and `PageAssembler`. The AI proposes a *plan*, never entry data; deterministic code validates every field against the real blueprints (unknown fields get "did you mean" suggestions, invalid options list the valid ones, entry and asset references are resolved and checked) and either saves a correct entry or returns specific errors the AI uses to fix its own plan.
+
+The guardrails are absolute:
+
+- **Drafts only.** Scout creates and revises unpublished drafts. It cannot publish, cannot touch published entries, and every draft ends with a review link to the normal edit screen.
+- **Nothing writes around the pipeline.** The chat, the `pages:assemble` command, and the MCP tools are different doorways into the same validation.
+- **Explicit boundaries.** `excluded_collections` and `excluded_fields` in the config are refused at validation time, wherever they appear.
+
+## Installation
+
+```bash
+composer require mlaroy/scout
+```
+
+Set `ANTHROPIC_API_KEY` in `.env`. Without a key, the chat input is disabled but everything else still renders.
+
+Publish the config if you want to change it:
+
+```bash
+php artisan vendor:publish --tag=scout-config
+```
+
+## Configuration
+
+Scout adapts to what your site has. Two optional declarations unlock its site-aware behavior:
+
+```php
+return [
+    // "My site has a page-builder concept; this is the replicator field."
+    // Enables sections-style page plans with component-aware validation.
+    // Null = blueprint-generic drafting only.
+    'page_builder_field' => null,
+
+    // "My site maintains a component catalog; this is the collection."
+    // Gives the assistant judgment about which components to use when.
+    // Null = the AI chooses on general reasoning.
+    'catalog_collection' => null,
+
+    // Collections and fields the assistant may never touch.
+    'excluded_collections' => [],
+    'excluded_fields' => [],
+
+    // Optional Statamic search index for content lookups on large sites.
+    // Falls back to a direct entry scan when unset or failing.
+    'search_index' => env('SCOUT_SEARCH_INDEX'),
+];
+```
+
+A vanilla Statamic site leaves the first two null and still gets a genuinely useful assistant: drafting and revising entries in any collection, validated against blueprints. A site with a component/page-builder system points Scout at it and gets component-aware page composition. The [Cascadia starter kit](https://statamic.com/starter-kits/mlaroy/cascadia) ships this file pre-filled.
+
+The catalog collection, when configured, should hold one entry per builder component with `description`, `use_when`, `avoid_when`, and `content_expectations` fields — Scout reads these when deciding which components fit a brief.
+
+## Permissions
+
+Scout registers a **"use assistant"** permission (chat, drafting). Super users pass automatically. Host sites can register their own permissions into the same "assistant" group.
+
+## Quick actions are host-aware
+
+The audit/sync quick-action chips and their command palette entries wrap *host-site* artisan commands (`components:audit`, `components:sync`). Scout checks whether those commands exist and only shows the actions when they do — on a site without them, the chips simply don't render.
+
+## Swapping the AI provider
+
+The code talks to the small `Cascadia\Scout\AssistantClient` interface; Claude is the bundled implementation. Bind your own in a service provider:
+
+```php
+$this->app->bind(
+    \Cascadia\Scout\AssistantClient::class,
+    \App\MyProviderClient::class,
+);
+```
+
+## Other doorways
+
+- `php artisan pages:assemble plan.yaml [--dry-run]` — validate a YAML page plan and create a draft from the command line.
+- MCP tools `validate-page-plan` and `assemble-page` register with Laravel Boost's MCP server automatically when `laravel/mcp` is present — AI coding agents get the same validated write path.
+
+## Development
+
+```bash
+composer install
+composer test          # PHPUnit via Testbench
+npm install && npm run build   # control panel assets (pre-built dist is committed)
+```

@@ -1,0 +1,38 @@
+title: Article
+tabs:
+  main:
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+          -
+            handle: content
+            field:
+              type: bard
+              sets:
+                quotes:
+                  display: Quotes
+                  sets:
+                    quote:
+                      display: Quote
+                      fields:
+                        -
+                          handle: quote
+                          field:
+                            type: text
+                        -
+                          handle: attribution
+                          field:
+                            type: text
+          -
+            handle: count
+            field:
+              type: integer
+          -
+            handle: secret_flag
+            field:
+              type: toggle

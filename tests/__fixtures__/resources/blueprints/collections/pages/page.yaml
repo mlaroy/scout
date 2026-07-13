@@ -1,0 +1,54 @@
+title: Page
+tabs:
+  main:
+    sections:
+      -
+        fields:
+          -
+            handle: title
+            field:
+              type: text
+              required: true
+          -
+            handle: header_style
+            field:
+              type: select
+              options:
+                plain: Plain
+                hero: Hero
+          -
+            handle: page_builder
+            field:
+              type: replicator
+              sets:
+                heros:
+                  display: Heros
+                  sets:
+                    hero:
+                      display: Hero
+                      fields:
+                        -
+                          handle: heading
+                          field:
+                            type: text
+                        -
+                          handle: theme
+                          field:
+                            type: select
+                            options:
+                              default: Default
+                              dark: Dark
+                callouts:
+                  display: Callouts
+                  sets:
+                    cta:
+                      display: CTA
+                      fields:
+                        -
+                          handle: cta_heading
+                          field:
+                            type: text
+                        -
+                          handle: show_button
+                          field:
+                            type: toggle
