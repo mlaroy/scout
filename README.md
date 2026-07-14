@@ -62,6 +62,8 @@ The catalog collection, when configured, should hold one entry per builder compo
 
 Scout registers a **"use assistant"** permission (chat, drafting). Super users pass automatically. Host sites can register their own permissions into the same "assistant" group.
 
+Inside a chat, reads are scoped to the signed-in editor's own CP permissions: search, page contents, and collection field listings only surface collections the user could open themselves ("view {handle} entries"), and asset search only surfaces containers they can view. Collections in `excluded_collections` stay invisible to everyone. All queries run through Statamic's own repositories (Stache / configured search index) — the model can only call Scout's fixed tools; it has no query language and no API access.
+
 ## Quick actions are host-aware
 
 The audit/sync quick-action chips and their command palette entries wrap *host-site* artisan commands (`components:audit`, `components:sync`). Scout checks whether those commands exist and only shows the actions when they do — on a site without them, the chips simply don't render.

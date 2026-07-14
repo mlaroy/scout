@@ -273,7 +273,7 @@ class AssistantService
     {
         $collection = Collection::find($handle);
 
-        if (! $collection || in_array($handle, config('scout.excluded_collections', []))) {
+        if (! $collection || in_array($handle, config('scout.excluded_collections', [])) || ! $this->userCanViewCollection($handle)) {
             return "Unknown or off-limits collection \"{$handle}\".";
         }
 
@@ -316,6 +316,10 @@ class AssistantService
         $entry = Entry::find($entryId);
 
         if (! $entry) {
+            return "No entry with id \"{$entryId}\".";
+        }
+
+        if (in_array($entry->collectionHandle(), config('scout.excluded_collections', [])) || ! $this->userCanViewCollection($entry->collectionHandle())) {
             return "No entry with id \"{$entryId}\".";
         }
 
@@ -365,6 +369,7 @@ class AssistantService
 
         $collections = collect(Collection::handles())
             ->reject(fn ($handle) => in_array($handle, config('scout.excluded_collections', [])))
+            ->filter(fn ($handle) => $this->userCanViewCollection($handle))
             ->when($collection, fn ($handles) => $handles->filter(fn ($handle) => $handle === $collection))
             ->values()
             ->all();
@@ -396,8 +401,34 @@ class AssistantService
      *
      * @return \Illuminate\Support\Collection<int, \Statamic\Contracts\Entries\Entry>
      */
+    /**
+     * Read-side permission parity: the assistant only surfaces collections
+     * the current CP user could open themselves (Statamic's CollectionPolicy,
+     * i.e. "view {handle} entries"; supers pass). Outside an authenticated
+     * context (CLI, tests) there is no user to scope to — the doorway that
+     * invoked us is responsible for access, so nothing is hidden.
+     */
+    protected function userCanViewCollection(string $handle): bool
+    {
+        $user = User::current();
+
+        if (! $user) {
+            return true;
+        }
+
+        $collection = Collection::find($handle);
+
+        return $collection && $user->can('view', $collection);
+    }
+
     protected function searchEntries(string $query, array $collections, bool $searchContent): \Illuminate\Support\Collection
     {
+        // The stache query builder treats whereIn('collection', []) as
+        // unconstrained, which would leak everything the filters removed.
+        if ($collections === []) {
+            return collect();
+        }
+
         if ($query !== '' && ($index = config('scout.search_index'))) {
             try {
                 return collect(Search::index($index)->ensureExists()->search($query)->get())
@@ -429,6 +460,7 @@ class AssistantService
         $query = mb_strtolower(trim($query));
 
         $assets = AssetContainer::all()
+            ->filter(fn ($container) => ($user = User::current()) === null || $user->can('view', $container))
             ->flatMap(fn ($container) => $container->assets())
             ->filter(fn ($asset) => $query === ''
                 || str_contains(mb_strtolower($asset->basename()), $query)
@@ -662,6 +694,7 @@ class AssistantService
 
         $collections = collect(Collection::handles())
             ->reject(fn ($handle) => in_array($handle, config('scout.excluded_collections', [])))
+            ->filter(fn ($handle) => $this->userCanViewCollection($handle))
             ->map(fn ($handle) => $handle.(Collection::find($handle)->dated() ? ' (dated)' : ''))
             ->implode(', ');
 

@@ -6,6 +6,7 @@ use Cascadia\Scout\AssistantClient;
 use Cascadia\Scout\AssistantService;
 use Cascadia\Scout\Tests\TestCase;
 use Statamic\Facades\Entry;
+use Statamic\Facades\User;
 
 class AssistantServiceTest extends TestCase
 {
@@ -115,6 +116,49 @@ class AssistantServiceTest extends TestCase
 
         $this->assertStringContainsString('loses the trail', $result['reply']);
         $this->assertNull($result['draft']);
+    }
+
+    public function test_reads_are_scoped_to_the_users_collection_permissions(): void
+    {
+        $this->actingAs(User::make()->id('editor')->email('editor@example.com')->save());
+
+        $findCall = ['id' => 't1', 'name' => 'find_pages', 'input' => ['query' => 'about']];
+        $getCall = ['id' => 't2', 'name' => 'get_page', 'input' => ['entry_id' => 'pages-about']];
+
+        $client = $this->fakeClient([
+            ['text' => '', 'tool_calls' => [$findCall], 'stop_reason' => 'tool_use', 'raw_content' => [array_merge(['type' => 'tool_use'], $findCall)]],
+            ['text' => '', 'tool_calls' => [$getCall], 'stop_reason' => 'tool_use', 'raw_content' => [array_merge(['type' => 'tool_use'], $getCall)]],
+            ['text' => 'Nothing I can show you.', 'tool_calls' => [], 'stop_reason' => 'end_turn', 'raw_content' => []],
+        ]);
+
+        app(AssistantService::class)->chat([
+            ['role' => 'user', 'content' => 'Find the about page'],
+        ]);
+
+        $results = collect($client->receivedMessages)->flatten(1)->where('type', 'tool_result')->values();
+
+        $this->assertStringContainsString('No pages match', $results[0]['content']);
+        $this->assertStringContainsString('No entry with id', $results[1]['content']);
+    }
+
+    public function test_super_users_read_everything(): void
+    {
+        $this->actingAs(User::make()->id('admin')->email('admin@example.com')->makeSuper()->save());
+
+        $findCall = ['id' => 't1', 'name' => 'find_pages', 'input' => ['query' => 'about']];
+
+        $client = $this->fakeClient([
+            ['text' => '', 'tool_calls' => [$findCall], 'stop_reason' => 'tool_use', 'raw_content' => [array_merge(['type' => 'tool_use'], $findCall)]],
+            ['text' => 'Found it.', 'tool_calls' => [], 'stop_reason' => 'end_turn', 'raw_content' => []],
+        ]);
+
+        app(AssistantService::class)->chat([
+            ['role' => 'user', 'content' => 'Find the about page'],
+        ]);
+
+        $results = collect($client->receivedMessages)->flatten(1)->where('type', 'tool_result')->values();
+
+        $this->assertStringContainsString('pages-about', $results[0]['content']);
     }
 
     /**
