@@ -5,6 +5,7 @@ namespace Cascadia\Scout\Tests\Feature;
 use Cascadia\Scout\PageAssembler;
 use Cascadia\Scout\Tests\TestCase;
 use RuntimeException;
+use Statamic\Facades\Collection;
 use Statamic\Facades\Entry;
 
 class PageAssemblerTest extends TestCase
@@ -68,15 +69,72 @@ class PageAssemblerTest extends TestCase
         ]);
     }
 
-    public function test_it_refuses_to_update_a_published_entry(): void
+    public function test_it_refuses_to_update_a_published_entry_without_revisions(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/Only unpublished drafts/');
+        $this->expectExceptionMessageMatches('/does not use revisions/');
 
         app(PageAssembler::class)->update('pages-about', [
             'title' => 'Hijacked',
             'sections' => [],
         ]);
+    }
+
+    public function test_update_saves_a_published_entry_as_a_working_copy(): void
+    {
+        $this->enableRevisions();
+
+        $revised = app(PageAssembler::class)->update('pages-about', [
+            'title' => 'About (Revised)',
+            'sections' => [['component' => 'hero', 'fields' => ['heading' => 'New']]],
+        ]);
+
+        $live = Entry::find('pages-about');
+
+        $this->assertSame('About', $live->get('title'));
+        $this->assertSame([], $live->get('page_builder'));
+        $this->assertTrue($live->hasWorkingCopy());
+        $this->assertSame('About (Revised)', $live->fromWorkingCopy()->get('title'));
+        $this->assertSame('hero', $live->fromWorkingCopy()->get('page_builder')[0]['type']);
+        $this->assertSame('About (Revised)', $revised->get('title'));
+    }
+
+    public function test_update_entry_builds_on_an_existing_working_copy(): void
+    {
+        $this->enableRevisions();
+
+        Entry::make()
+            ->collection('articles')
+            ->id('articles-post')
+            ->slug('post')
+            ->published(true)
+            ->date(now())
+            ->data(['title' => 'Post', 'count' => 1])
+            ->save();
+
+        $pending = clone Entry::find('articles-post');
+        $pending->set('title', 'Post (CP edit)');
+        $pending->makeWorkingCopy()->save();
+
+        $revised = app(PageAssembler::class)->updateEntry('articles-post', [
+            'fields' => ['count' => 5],
+        ]);
+
+        $this->assertSame('Post (CP edit)', $revised->get('title'));
+        $this->assertSame(5, $revised->get('count'));
+        $this->assertSame('Post', Entry::find('articles-post')->get('title'));
+        $this->assertSame(1, Entry::find('articles-post')->get('count'));
+    }
+
+    protected function enableRevisions(): void
+    {
+        config([
+            'statamic.editions.pro' => true,
+            'statamic.revisions.enabled' => true,
+        ]);
+
+        Collection::find('pages')->revisionsEnabled(true)->save();
+        Collection::find('articles')->revisionsEnabled(true)->save();
     }
 
     public function test_it_assembles_a_dated_document_entry(): void

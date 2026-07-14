@@ -7,11 +7,17 @@ use RuntimeException;
 use Statamic\Contracts\Entries\Entry as EntryContract;
 use Statamic\Facades\Collection;
 use Statamic\Facades\Entry;
+use Statamic\Facades\User;
 
 /**
  * Turns a validated page plan into a draft entry. The validator is the
  * gate: assembly refuses to run while the plan has errors, so nothing
  * malformed ever reaches content storage.
+ *
+ * The live version of a published entry is never written to. Revising a
+ * published entry lands as a working copy (requires revisions) that a
+ * human reviews and publishes in the CP; without revisions, published
+ * entries are read-only to the assembler.
  */
 class PageAssembler
 {
@@ -95,9 +101,10 @@ class PageAssembler
     }
 
     /**
-     * Merge revised fields onto an existing UNPUBLISHED document entry.
-     * Unlike builder pages (whole-plan replacement), documents merge so a
-     * single field can change without resending the body.
+     * Merge revised fields onto an existing document entry. Unlike builder
+     * pages (whole-plan replacement), documents merge so a single field can
+     * change without resending the body. Drafts save directly; published
+     * entries save as a working copy.
      */
     public function updateEntry(string $entryId, array $plan): EntryContract
     {
@@ -109,13 +116,11 @@ class PageAssembler
 
         $this->guardCollection($entry->collectionHandle());
 
-        if ($entry->published()) {
-            throw new RuntimeException('Only unpublished drafts can be revised. This entry is published — edit it in the control panel instead.');
-        }
+        $target = $this->reviseTarget($entry);
 
-        $plan['collection'] = $entry->collectionHandle();
-        $plan['title'] ??= $entry->get('title');
-        $plan['slug'] ??= $entry->slug();
+        $plan['collection'] = $target->collectionHandle();
+        $plan['title'] ??= $target->get('title');
+        $plan['slug'] ??= $target->slug();
 
         $result = $this->validator->validateEntry($plan);
 
@@ -125,11 +130,11 @@ class PageAssembler
 
         $data = $result['data'];
 
-        $entry->merge(array_merge(['title' => $data['title']], $data['fields']));
+        $target->merge(array_merge(['title' => $data['title']], $data['fields']));
 
-        $entry->save();
+        $this->saveRevision($target);
 
-        return $entry;
+        return $target;
     }
 
     protected function guardCollection(string $handle): void
@@ -140,8 +145,9 @@ class PageAssembler
     }
 
     /**
-     * Replace an existing UNPUBLISHED entry's content with a revised plan.
-     * Published entries are never touched — revision is a drafts-only power.
+     * Replace an existing entry's content with a revised plan. Drafts save
+     * directly; published entries save as a working copy — the live version
+     * is untouched until a human publishes the revision in the CP.
      */
     public function update(string $entryId, array $plan): EntryContract
     {
@@ -153,12 +159,10 @@ class PageAssembler
 
         $this->guardCollection($entry->collectionHandle());
 
-        if ($entry->published()) {
-            throw new RuntimeException('Only unpublished drafts can be revised. This entry is published — edit it in the control panel instead.');
-        }
+        $target = $this->reviseTarget($entry);
 
-        $plan['collection'] = $entry->collectionHandle();
-        $plan['slug'] ??= $entry->slug();
+        $plan['collection'] = $target->collectionHandle();
+        $plan['slug'] ??= $target->slug();
 
         $result = $this->validate($plan);
 
@@ -169,16 +173,60 @@ class PageAssembler
         $data = $result['data'];
         $builderField = config('scout.page_builder_field');
 
-        $entry
+        $target
             ->set('title', $data['title'])
             ->set($builderField, $data[$builderField]);
 
         foreach ($data['fields'] ?? [] as $handle => $value) {
-            $entry->set($handle, $value);
+            $target->set($handle, $value);
         }
 
-        $entry->save();
+        $this->saveRevision($target);
 
-        return $entry;
+        return $target;
+    }
+
+    /**
+     * The entry object a revision may be applied to: the entry itself when
+     * it's an unpublished draft, or its working copy (existing one if a CP
+     * user has pending edits, fresh otherwise) when it's published in a
+     * revisions-enabled collection. Published entries without revisions are
+     * off-limits — the live version is never a write target.
+     */
+    protected function reviseTarget(EntryContract $entry): EntryContract
+    {
+        if (! $entry->published()) {
+            return $entry;
+        }
+
+        if (! $entry->revisionsEnabled()) {
+            throw new RuntimeException('This entry is published and its collection does not use revisions, so it can only be edited in the control panel. Enable revisions on the collection to revise published entries as working copies.');
+        }
+
+        // Build on a pending working copy when one exists (preserving CP
+        // edits); otherwise on a clone, so the in-memory live entry stays
+        // pristine — only the working copy is ever saved.
+        return $entry->hasWorkingCopy() ? $entry->fromWorkingCopy() : clone $entry;
+    }
+
+    /**
+     * Persist a revised entry: drafts save in place, published entries save
+     * as a working copy that a human reviews and publishes.
+     */
+    protected function saveRevision(EntryContract $entry): void
+    {
+        if (! $entry->published()) {
+            $entry->save();
+
+            return;
+        }
+
+        $workingCopy = $entry->makeWorkingCopy();
+
+        if ($user = User::current()) {
+            $workingCopy->user($user);
+        }
+
+        $workingCopy->save();
     }
 }

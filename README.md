@@ -10,7 +10,7 @@ Everything Scout writes goes through the **write pipeline** — `PagePlanValidat
 
 The guardrails are absolute:
 
-- **Drafts only.** Scout creates and revises unpublished drafts. It cannot publish, cannot touch published entries, and every draft ends with a review link to the normal edit screen.
+- **A human publishes, always.** Scout creates and revises unpublished drafts, and on collections with revisions enabled it can revise published entries too — as a working copy the editor reviews and publishes. It never publishes anything and never writes to the live version of a published entry; every write ends with a review link to the normal edit screen. On collections without revisions, published entries are read-only to Scout.
 - **Nothing writes around the pipeline.** The chat, the `pages:assemble` command, and the MCP tools are different doorways into the same validation.
 - **Explicit boundaries.** `excluded_collections` and `excluded_fields` in the config are refused at validation time, wherever they appear.
 
@@ -80,7 +80,8 @@ $this->app->bind(
 ## Other doorways
 
 - `php artisan pages:assemble plan.yaml [--dry-run]` — validate a YAML page plan and create a draft from the command line.
-- MCP tools `validate-page-plan` and `assemble-page` register with Laravel Boost's MCP server automatically when `laravel/mcp` is present — AI coding agents get the same validated write path.
+- `php artisan pages:revise <entry-id> plan.yaml [--dry-run]` — apply a revised plan to an existing entry: drafts update in place, published entries (revisions required) save as a working copy for CP review.
+- MCP tools `validate-page-plan`, `assemble-page`, and `revise-page` register with Laravel Boost's MCP server automatically when `laravel/mcp` is present — AI coding agents get the same validated write path.
 
 ## Development
 

@@ -3,7 +3,9 @@
 namespace Cascadia\Scout;
 
 use Cascadia\Scout\Console\Commands\PagesAssemble;
+use Cascadia\Scout\Console\Commands\PagesRevise;
 use Cascadia\Scout\Mcp\Tools\AssemblePage;
+use Cascadia\Scout\Mcp\Tools\RevisePage;
 use Cascadia\Scout\Mcp\Tools\ValidatePagePlan;
 use Laravel\Mcp\Server\Tool;
 use Statamic\Facades\CP\Nav;
@@ -21,6 +23,7 @@ class ServiceProvider extends AddonServiceProvider
 
     protected $commands = [
         PagesAssemble::class,
+        PagesRevise::class,
     ];
 
     public function register(): void
@@ -51,6 +54,7 @@ class ServiceProvider extends AddonServiceProvider
         config(['boost.mcp.tools.include' => array_merge(config('boost.mcp.tools.include', []), [
             ValidatePagePlan::class,
             AssemblePage::class,
+            RevisePage::class,
         ])]);
     }
 

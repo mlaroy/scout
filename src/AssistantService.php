@@ -175,6 +175,8 @@ class AssistantService
             return ['The plan must be an object with title and sections.', true, null];
         }
 
+        $wasPublished = (bool) Entry::find($entryId)?->published();
+
         try {
             $entry = $this->assembler->update($entryId, $plan);
         } catch (RuntimeException $exception) {
@@ -183,7 +185,13 @@ class AssistantService
 
         $draft = $this->draftPayload($entry);
 
-        return ["Draft updated. Edit URL: {$draft['edit_url']}", false, $draft];
+        return [
+            $wasPublished
+                ? "Changes saved as a working copy — the live page is unchanged until the editor publishes the revision. Edit URL: {$draft['edit_url']}"
+                : "Draft updated. Edit URL: {$draft['edit_url']}",
+            false,
+            $draft,
+        ];
     }
 
     /**
@@ -217,6 +225,8 @@ class AssistantService
             return ['The plan must be an object with the fields to change.', true, null];
         }
 
+        $wasPublished = (bool) Entry::find($entryId)?->published();
+
         try {
             $entry = $this->assembler->updateEntry($entryId, $plan);
         } catch (RuntimeException $exception) {
@@ -225,7 +235,13 @@ class AssistantService
 
         $draft = $this->draftPayload($entry);
 
-        return ["Draft updated. Edit URL: {$draft['edit_url']}", false, $draft];
+        return [
+            $wasPublished
+                ? "Changes saved as a working copy — the live entry is unchanged until the editor publishes the revision. Edit URL: {$draft['edit_url']}"
+                : "Draft updated. Edit URL: {$draft['edit_url']}",
+            false,
+            $draft,
+        ];
     }
 
     /**
@@ -310,6 +326,14 @@ class AssistantService
             'collection' => $entry->collectionHandle(),
             'published' => $entry->published(),
         ];
+
+        // A pending working copy is the latest state of the content — read
+        // from it so revisions build on it instead of the stale live version.
+        if ($entry->published() && $entry->revisionsEnabled() && $entry->hasWorkingCopy()) {
+            $entry = $entry->fromWorkingCopy();
+            $payload['title'] = $entry->get('title');
+            $payload['has_working_copy'] = true;
+        }
 
         $builderField = $this->site->builderField();
 
@@ -505,7 +529,7 @@ class AssistantService
             ],
             [
                 'name' => 'update_entry',
-                'description' => 'Revise an UNPUBLISHED document-style draft (blog post, team member, ...). Send only the fields you are changing — they merge onto the entry. Not for builder pages (use update_page).',
+                'description' => 'Revise a document-style entry (blog post, team member, ...). Send only the fields you are changing — they merge onto the entry. Drafts update in place; published entries save as a working copy the editor reviews and publishes (never live directly). Not for builder pages (use update_page).',
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -545,7 +569,7 @@ class AssistantService
             ],
             [
                 'name' => 'update_page',
-                'description' => 'Replace an UNPUBLISHED draft\'s content with a revised plan. Send the complete plan (all sections, not just changed ones) — it replaces everything. Published entries cannot be revised.',
+                'description' => 'Replace an entry\'s content with a revised plan. Send the complete plan (all sections, not just changed ones) — it replaces everything. Drafts update in place; published entries save as a working copy the editor reviews and publishes (the live page never changes directly). Published entries in collections without revisions are refused.',
                 'input_schema' => [
                     'type' => 'object',
                     'properties' => [
@@ -620,9 +644,11 @@ class AssistantService
                 $entry->id(),
                 $entry->collectionHandle(),
                 $entry->published() ? 'published' : 'unpublished draft',
-                $entry->published()
-                    ? 'It is published, so you cannot revise it — explain that if asked.'
-                    : 'It is an unpublished draft, so you can revise it with get_page + update_page.',
+                match (true) {
+                    ! $entry->published() => 'It is an unpublished draft, so you can revise it with get_page + update_page.',
+                    $entry->revisionsEnabled() => 'It is published; you can still revise it with get_page + update_page — your changes save as a working copy the editor reviews and publishes, never straight to the live page.',
+                    default => 'It is published and its collection has no revisions, so you cannot revise it — explain that it must be edited in the control panel if asked.',
+                },
             );
         }
         $catalog = $this->site->catalogEntries()->map(fn ($entry, $slug) => [
@@ -654,10 +680,10 @@ You are Scout, the content assistant inside the Statamic control panel of this w
 
 Rules:
 - Drafts only, never publish. Always give the editor the edit URL so they can review.
-- You can also REVISE unpublished drafts: call get_page to read the current contents, apply the editor's changes to the plan, then update_page with the complete revised plan. After drafting a page, remember its entry_id so follow-up revision requests in the same conversation can use it.
+- You can also REVISE existing entries: call get_page to read the current contents, apply the editor's changes to the plan, then update_page with the complete revised plan. Unpublished drafts update in place. Published entries (in collections with revisions enabled) save as a WORKING COPY — the live page does not change until the editor reviews and publishes the revision in the CP; say so when you revise one. Published entries without revisions can only be edited in the CP. After drafting a page, remember its entry_id so follow-up revision requests in the same conversation can use it.
 - NEVER ask the editor for an entry id — they don't know them. When they name a page ("the services draft"), use find_pages to resolve it. If exactly one matches, proceed and mention which page you're working on; if several match, ask which one by title.
 - For image fields, use search_assets to find existing images in the asset library and use the returned path as the field value. Prefer images whose filename or alt text matches the content. You cannot upload new files — if nothing suitable exists, leave the field empty and tell the editor which image slot needs a file.
-- Be honest about your limits. You can create and revise unpublished draft pages and use existing library images — you cannot edit published pages, publish anything, upload new files, build new components, or change templates or code. If asked for any of those, say you can't and suggest the alternative (published pages are edited on the entry's edit screen; new components are developer work).
+- Be honest about your limits. You can create and revise draft pages, propose working-copy revisions to published pages, and use existing library images — you cannot publish anything (drafts or working copies), change a live page directly, upload new files, build new components, or change templates or code. If asked for any of those, say you can't and suggest the alternative (publishing happens on the entry's edit screen; new components are developer work).
 - Pages also have page-level settings outside the builder (header style, page title visibility, banner) — get_page returns them under "fields", get_collection_fields('pages') lists them, and page plans accept them in a top-level fields object.
 - Field values must use real handles from the fieldsets. Bard/rich text fields accept MARKDOWN (headings, lists, bold, links become real rich text). To inject a special block inside rich text, pass the bard value as a list mixing markdown strings and {set: "<set_handle>", fields: {...}} items — the available sets and their fields appear in the field's config from get_component_fields / get_collection_fields.
 - Theme options: default, dark, accent, accent-dark, muted. Every page should start with a hero-group component unless the editor says otherwise, and CTA-style callouts read best at the end.
