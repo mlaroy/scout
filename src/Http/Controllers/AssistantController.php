@@ -6,13 +6,14 @@ use Anthropic\Core\Exceptions\APIConnectionException;
 use Anthropic\Core\Exceptions\APIStatusException;
 use Anthropic\Core\Exceptions\AuthenticationException;
 use Anthropic\Core\Exceptions\RateLimitException;
-use Cascadia\Scout\AssistantClient;
 use Cascadia\Scout\AssistantService;
+use Cascadia\Scout\ProviderManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 use Statamic\Facades\User;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -21,23 +22,25 @@ class AssistantController
     /**
      * The full-page assistant (System > Assistant).
      */
-    public function page(): Response
+    public function page(ProviderManager $providers): Response
     {
         abort_unless(User::current()->can('use assistant'), 403);
 
         return Inertia::render('AssistantPage', [
             'title' => 'Assistant',
-            'configured' => (bool) config('scout.api_key'),
+            'configured' => $providers->configured(),
             'canAudit' => $this->hasCommand('components:audit'),
             'canSync' => User::current()->can('sync component catalog') && $this->hasCommand('components:sync'),
-            'model' => config('scout.model'),
-            'provider' => class_basename(app(AssistantClient::class)),
+            'model' => $providers->model(),
+            'provider' => $providers->label(),
             'showBubble' => User::current()->preferences()['assistant']['show_bubble'] ?? true,
         ]);
     }
 
     public function preferences(Request $request): JsonResponse
     {
+        abort_unless(User::current()->can('use assistant'), 403);
+
         $validated = $request->validate(['show_bubble' => ['required', 'boolean']]);
 
         User::current()->setPreference('assistant.show_bubble', $validated['show_bubble'])->save();
@@ -48,12 +51,12 @@ class AssistantController
     /**
      * Widget boot payload: what the current user can do.
      */
-    public function boot(): JsonResponse
+    public function boot(ProviderManager $providers): JsonResponse
     {
         $user = User::current();
 
         return response()->json([
-            'configured' => (bool) config('scout.api_key'),
+            'configured' => $providers->configured(),
             'can_chat' => $user->can('use assistant'),
             'can_audit' => $this->hasCommand('components:audit'),
             'can_sync' => $user->can('sync component catalog') && $this->hasCommand('components:sync'),
@@ -70,11 +73,11 @@ class AssistantController
         return array_key_exists($name, Artisan::all());
     }
 
-    public function chat(Request $request, AssistantService $assistant): JsonResponse|StreamedResponse
+    public function chat(Request $request, AssistantService $assistant, ProviderManager $providers): JsonResponse|StreamedResponse
     {
         abort_unless(User::current()->can('use assistant'), 403);
 
-        abort_unless(config('scout.api_key'), 422, 'No ANTHROPIC_API_KEY configured.');
+        abort_unless($providers->configured(), 422, 'No AI provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY.');
 
         $validated = $request->validate([
             'messages' => ['required', 'array', 'max:40'],
@@ -152,12 +155,15 @@ class AssistantController
                 ? 'The Claude API account is out of credits — top up under Plans & Billing in the Anthropic Console.'
                 : tap('The Claude API returned an error — check the logs for details.', fn () => report($exception)),
             $exception instanceof APIConnectionException => 'Could not reach the Claude API — check your connection and try again.',
+            $exception instanceof RuntimeException => tap($exception->getMessage(), fn () => report($exception)),
             default => tap('Something went wrong — check the logs for details.', fn () => report($exception)),
         };
     }
 
     public function audit(): JsonResponse
     {
+        abort_unless(User::current()->can('use assistant'), 403);
+
         abort_unless($this->hasCommand('components:audit'), 404);
 
         $exitCode = Artisan::call('components:audit');

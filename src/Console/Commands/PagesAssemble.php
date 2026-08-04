@@ -2,14 +2,16 @@
 
 namespace Cascadia\Scout\Console\Commands;
 
+use Cascadia\Scout\Console\Commands\Concerns\ReadsPlanFiles;
 use Cascadia\Scout\PageAssembler;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Statamic\Facades\YAML;
 
 class PagesAssemble extends Command
 {
+    use ReadsPlanFiles;
+
     protected $signature = 'pages:assemble
         {plan : Path to a YAML page plan, or - to read from STDIN}
         {--dry-run : Validate and print the normalized entry data without saving}';
@@ -73,16 +75,5 @@ class PagesAssemble extends Command
         $this->components->twoColumnDetail('Edit', url("/cp/collections/{$entry->collectionHandle()}/entries/{$entry->id()}"));
 
         return self::SUCCESS;
-    }
-
-    protected function readFile(string $path): ?string
-    {
-        if (! File::exists($path)) {
-            $this->components->error("Plan file not found: {$path}");
-
-            return null;
-        }
-
-        return File::get($path);
     }
 }

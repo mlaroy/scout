@@ -30,7 +30,9 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::register();
 
-        $this->app->bind(AssistantClient::class, AnthropicAssistantClient::class);
+        $this->app->singleton(ProviderManager::class);
+
+        $this->app->bind(AssistantClient::class, fn ($app) => $app->make(ProviderManager::class)->makeClient());
     }
 
     public function bootAddon(): void
@@ -44,6 +46,10 @@ class ServiceProvider extends AddonServiceProvider
      * Merge the write pipeline's tools into Laravel Boost's MCP server
      * when Boost is present — AI coding agents get the same validated
      * write path the CP assistant uses.
+     *
+     * These tools have no `use assistant` permission check of their own;
+     * they trust Boost's own MCP authentication as the boundary, since an
+     * MCP client is a developer's local tooling, not a CP user session.
      */
     protected function registerMcpTools(): void
     {

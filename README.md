@@ -20,7 +20,7 @@ The guardrails are absolute:
 composer require mlaroy/scout
 ```
 
-Set `ANTHROPIC_API_KEY` in `.env`. Without a key, the chat input is disabled but everything else still renders.
+Set one of `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `XAI_API_KEY` in `.env` — Scout auto-detects whichever is present, in that priority order (see [Swapping the AI provider](#swapping-the-ai-provider)). Without a key, the chat input is disabled but everything else still renders.
 
 Publish the config if you want to change it:
 
@@ -70,14 +70,23 @@ The audit/sync quick-action chips and their command palette entries wrap *host-s
 
 ## Swapping the AI provider
 
-The code talks to the small `Cascadia\Scout\AssistantClient` interface; Claude is the bundled implementation. Bind your own in a service provider:
+The code talks to the small `Cascadia\Scout\AssistantClient` interface. Scout ships two implementations: `AnthropicAssistantClient` (Claude) and `OpenAIAssistantClient`, a generic OpenAI Chat Completions-compatible client that also serves xAI's Grok, since it exposes the same wire format at a different base URL.
+
+`config('scout.providers')` lists each provider's client class, API key, base URL (OpenAI-compatible providers only), and model. `ProviderManager` picks the active one: an explicit `SCOUT_PROVIDER` override if its `api_key` is set, otherwise the first provider in that list with an `api_key` present — `anthropic`, then `openai`, then `xai`.
+
+To add another provider (say, Gemini), implement `AssistantClient` and add an entry to `config('scout.providers')`:
 
 ```php
-$this->app->bind(
-    \Cascadia\Scout\AssistantClient::class,
-    \App\MyProviderClient::class,
-);
+'gemini' => [
+    'client' => \App\GeminiAssistantClient::class,
+    'label' => 'Google (Gemini)',
+    'api_key' => env('GEMINI_API_KEY'),
+    'model' => env('SCOUT_GEMINI_MODEL', 'gemini-3-pro'),
+    'max_tokens' => env('SCOUT_MAX_TOKENS', 8192),
+],
 ```
+
+Setting `GEMINI_API_KEY` then makes it eligible for auto-detection like any bundled provider.
 
 ## Other doorways
 

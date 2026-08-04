@@ -15,6 +15,7 @@
     ],
     "require": {
         "php": "^8.3",
+        "anthropic-ai/sdk": "^0.36.0",
         "statamic/cms": "^6.19"
     },
     "require-dev": {

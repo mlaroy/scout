@@ -16,7 +16,7 @@
                 <CardPanel heading="Status">
                     <Table>
                         <TableRow>
-                            <TableCell width="45%">Claude API key</TableCell>
+                            <TableCell width="45%">API key</TableCell>
                             <TableCell>
                                 <Badge :color="configured ? 'green' : 'red'">
                                     {{ configured ? 'Configured' : 'Missing' }}
@@ -24,17 +24,17 @@
                             </TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell>Model</TableCell>
-                            <TableCell>{{ model }}</TableCell>
+                            <TableCell>Provider</TableCell>
+                            <TableCell>{{ provider ?? '—' }}</TableCell>
                         </TableRow>
                         <TableRow>
-                            <TableCell>Provider</TableCell>
-                            <TableCell>{{ provider }}</TableCell>
+                            <TableCell>Model</TableCell>
+                            <TableCell>{{ model ?? '—' }}</TableCell>
                         </TableRow>
                     </Table>
                     <Description class="mt-3">
-                        <template v-if="!configured">Set <code>ANTHROPIC_API_KEY</code> in <code>.env</code> to enable chat.</template>
-                        <template v-else>Want a different LLM provider? Implement the <code>Cascadia\Scout\AssistantClient</code> contract and rebind it — see <code>docs/COMPONENT-SYSTEM.md</code>.</template>
+                        <template v-if="!configured">Set <code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, or <code>XAI_API_KEY</code> in <code>.env</code> to enable chat.</template>
+                        <template v-else>Want a different LLM provider? Implement the <code>Cascadia\Scout\AssistantClient</code> contract and add it to <code>config('scout.providers')</code>.</template>
                     </Description>
                 </CardPanel>
 

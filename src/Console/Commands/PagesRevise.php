@@ -2,15 +2,17 @@
 
 namespace Cascadia\Scout\Console\Commands;
 
+use Cascadia\Scout\Console\Commands\Concerns\ReadsPlanFiles;
 use Cascadia\Scout\PageAssembler;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Statamic\Facades\Entry;
 use Statamic\Facades\YAML;
 
 class PagesRevise extends Command
 {
+    use ReadsPlanFiles;
+
     protected $signature = 'pages:revise
         {entry : The id of the entry to revise}
         {plan : Path to a YAML page plan, or - to read from STDIN}
@@ -90,16 +92,5 @@ class PagesRevise extends Command
         $this->components->twoColumnDetail('Edit', url("/cp/collections/{$revised->collectionHandle()}/entries/{$revised->id()}"));
 
         return self::SUCCESS;
-    }
-
-    protected function readFile(string $path): ?string
-    {
-        if (! File::exists($path)) {
-            $this->components->error("Plan file not found: {$path}");
-
-            return null;
-        }
-
-        return File::get($path);
     }
 }

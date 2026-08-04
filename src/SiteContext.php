@@ -2,6 +2,7 @@
 
 namespace Cascadia\Scout;
 
+use Cascadia\Scout\Concerns\FlattensReplicatorSets;
 use Illuminate\Support\Collection;
 use Statamic\Facades\Collection as CollectionFacade;
 use Statamic\Facades\Entry;
@@ -14,6 +15,8 @@ use Statamic\Facades\Entry;
  */
 class SiteContext
 {
+    use FlattensReplicatorSets;
+
     public function builderField(): ?string
     {
         return config('scout.page_builder_field');
@@ -55,17 +58,5 @@ class SiteContext
             ->where('collection', $catalogCollection)
             ->get()
             ->keyBy(fn ($entry) => $entry->slug());
-    }
-
-    /**
-     * Replicator sets may be grouped one level deep; flatten to set handle => config.
-     */
-    protected function flattenSets(array $sets): Collection
-    {
-        return collect($sets)->flatMap(
-            fn ($config, $handle) => isset($config['sets'])
-                ? $config['sets']
-                : [$handle => $config]
-        );
     }
 }

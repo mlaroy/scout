@@ -2,6 +2,7 @@
 
 namespace Cascadia\Scout;
 
+use Cascadia\Scout\Concerns\FlattensReplicatorSets;
 use Facades\Statamic\Fieldtypes\RowId;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -39,6 +40,8 @@ use Tiptap\Editor;
  */
 class PagePlanValidator
 {
+    use FlattensReplicatorSets;
+
     /** @var array<int, string> */
     protected array $errors = [];
 
@@ -483,18 +486,6 @@ class PagePlanValidator
         $fields = (new Fields($field->config()['fields'] ?? []))->all();
 
         return $this->validateFields($fields, $value, $context);
-    }
-
-    /**
-     * Replicator sets may be grouped one level deep; flatten to set handle => config.
-     */
-    protected function flattenSets(array $sets): Collection
-    {
-        return collect($sets)->flatMap(
-            fn ($config, $handle) => isset($config['sets'])
-                ? $config['sets']
-                : [$handle => $config]
-        );
     }
 
     protected function closestHandle(string $handle, Collection $handles): ?string

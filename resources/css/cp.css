@@ -7,22 +7,22 @@
 
 
 /*
- * Text that sits ON the accent background needs black or white, chosen
- * by the accent's own lightness — the theme's ui-accent-text variable
- * is accent-colored (for use on neutral surfaces), not a contrast pair.
+ * Sits above ordinary page content but below Statamic's own portals,
+ * stacks (asset browser, link/entry pickers), and modals — otherwise the
+ * bubble floats on top of those UIs instead of behind them.
  */
-.assistant-widget,
-.assistant-page {
-    --assistant-accent-contrast: oklch(from var(--theme-color-ui-accent-bg) clamp(0, (0.65 - l) * 1000, 1) 0 h);
-}
+.assistant-widget { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: var(--z-index-above, 1); }
 
-.assistant-widget { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 100; }
-
+/*
+ * Text that sits ON the accent background is always white, matching
+ * Statamic's own primary-button convention (Button.vue uses text-white
+ * for the `primary` variant regardless of the chosen accent color).
+ */
 .assistant-bubble {
     display: flex; align-items: center; justify-content: center;
     width: 3.75rem; height: 3.75rem; border-radius: 9999px;
     background: var(--theme-color-ui-accent-bg);
-    color: var(--assistant-accent-contrast);
+    color: #fff;
     border: none; cursor: pointer;
     box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
 }
@@ -58,7 +58,7 @@
 .assistant-message.user {
     align-self: flex-end;
     background: var(--theme-color-ui-accent-bg);
-    color: var(--assistant-accent-contrast);
+    color: #fff;
     border-radius: 0.7rem 0.7rem 0.15rem 0.7rem; padding: 0.5rem 0.75rem;
 }
 .assistant-message.assistant {

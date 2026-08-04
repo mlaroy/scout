@@ -45,7 +45,7 @@
                 v-model="input"
                 aria-label="Message the assistant"
                 :rows="standalone ? 5 : 4"
-                :placeholder="configured ? 'Describe the page you want, or ask a question…' : 'Set ANTHROPIC_API_KEY to enable chat. Quick actions still work.'"
+                :placeholder="configured ? 'Describe the page you want, or ask a question…' : 'Set an AI provider API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY) to enable chat. Quick actions still work.'"
                 :disabled="busy || !configured"
                 @keydown.meta.enter.prevent="send"
             ></textarea>

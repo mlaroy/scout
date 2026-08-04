@@ -1,23 +1,57 @@
 <?php
 
+use Cascadia\Scout\AnthropicAssistantClient;
+use Cascadia\Scout\OpenAIAssistantClient;
+
 return [
 
     /*
     |--------------------------------------------------------------------------
-    | Claude API
+    | AI provider
     |--------------------------------------------------------------------------
     |
-    | Scout drafts content through a validated write pipeline. It talks to
-    | the Claude API via the AssistantClient contract; to use a different
-    | provider, bind your own implementation in a service provider.
+    | Scout drafts content through a validated write pipeline; it talks to
+    | whichever AI provider below is configured via the AssistantClient
+    | contract (src/AssistantClient.php). To add a provider, implement the
+    | interface and register it in the `providers` array.
+    |
+    | Set this to a key from `providers` (e.g. "openai") to force that
+    | provider. Leave it null to auto-detect: the first provider below
+    | with an api_key present wins, in array order.
     |
     */
 
-    'api_key' => env('ANTHROPIC_API_KEY'),
+    'provider' => env('SCOUT_PROVIDER'),
 
-    'model' => env('SCOUT_MODEL', 'claude-opus-4-8'),
+    'providers' => [
 
-    'max_tokens' => env('SCOUT_MAX_TOKENS', 8192),
+        'anthropic' => [
+            'client' => AnthropicAssistantClient::class,
+            'label' => 'Anthropic (Claude)',
+            'api_key' => env('ANTHROPIC_API_KEY'),
+            'model' => env('SCOUT_MODEL', 'claude-opus-4-8'),
+            'max_tokens' => env('SCOUT_MAX_TOKENS', 8192),
+        ],
+
+        'openai' => [
+            'client' => OpenAIAssistantClient::class,
+            'label' => 'OpenAI (ChatGPT / Codex)',
+            'api_key' => env('OPENAI_API_KEY'),
+            'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+            'model' => env('SCOUT_OPENAI_MODEL', 'gpt-5.1'),
+            'max_tokens' => env('SCOUT_MAX_TOKENS', 8192),
+        ],
+
+        'xai' => [
+            'client' => OpenAIAssistantClient::class,
+            'label' => 'xAI (Grok)',
+            'api_key' => env('XAI_API_KEY'),
+            'base_url' => env('XAI_BASE_URL', 'https://api.x.ai/v1'),
+            'model' => env('SCOUT_XAI_MODEL', 'grok-4'),
+            'max_tokens' => env('SCOUT_MAX_TOKENS', 8192),
+        ],
+
+    ],
 
     /*
     |--------------------------------------------------------------------------
