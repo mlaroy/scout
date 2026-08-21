@@ -8,6 +8,7 @@ use Anthropic\Core\Exceptions\AuthenticationException;
 use Anthropic\Core\Exceptions\RateLimitException;
 use Cascadia\Scout\AssistantService;
 use Cascadia\Scout\ProviderManager;
+use Cascadia\Scout\SiteContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +22,7 @@ class AssistantController
     /**
      * The full-page assistant (System > Assistant).
      */
-    public function page(ProviderManager $providers): Response
+    public function page(ProviderManager $providers, SiteContext $site): Response
     {
         abort_unless(User::current()->can('use assistant'), 403);
 
@@ -31,6 +32,8 @@ class AssistantController
             'model' => $providers->model(),
             'provider' => $providers->label(),
             'showBubble' => User::current()->preferences()['assistant']['show_bubble'] ?? true,
+            'builderField' => $site->builderField(),
+            'catalogCollection' => config('scout.catalog_collection'),
         ]);
     }
 

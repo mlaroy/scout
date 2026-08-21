@@ -31,12 +31,41 @@
                             <TableCell>Model</TableCell>
                             <TableCell>{{ model ?? '—' }}</TableCell>
                         </TableRow>
+                        <TableRow>
+                            <TableCell>Page builder field</TableCell>
+                            <TableCell>
+                                <Badge :color="builderField ? 'green' : 'gray'">{{ builderField ?? 'Not set' }}</Badge>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell>Component catalog</TableCell>
+                            <TableCell>
+                                <Badge :color="catalogCollection ? 'green' : 'gray'">{{ catalogCollection ?? 'Not set' }}</Badge>
+                            </TableCell>
+                        </TableRow>
                     </Table>
                     <Description class="mt-3">
                         <template v-if="!configured">Set <code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, or <code>XAI_API_KEY</code> in <code>.env</code> to enable chat.</template>
                         <template v-else>Want a different LLM provider? Implement the <code>Cascadia\Scout\AssistantClient</code> contract and add it to <code>config('scout.providers')</code>.</template>
                     </Description>
                 </CardPanel>
+
+                <Alert v-if="!builderField || !catalogCollection" variant="default">
+                    <Heading text="Drafting without component awareness" />
+                    <Description>
+                        <span v-if="!builderField && !catalogCollection">
+                            Scout can still draft and revise any entry, but it's writing blueprint-generic content only — it doesn't know this site has a page-builder field or a component catalog to reason about.
+                        </span>
+                        <span v-else-if="!builderField">
+                            Scout doesn't know which field is the page builder, so section-style page plans aren't available — it falls back to inferring block structure from existing entries.
+                        </span>
+                        <span v-else>
+                            Scout is drafting page sections without catalog judgment — it's choosing components on general reasoning rather than your catalog's <code>use_when</code>/<code>avoid_when</code> guidance.
+                        </span>
+                        <br><br>
+                        Set <code>page_builder_field</code> and <code>catalog_collection</code> in <code>config/scout.php</code> to unlock this — see the README's Configuration section.
+                    </Description>
+                </Alert>
 
                 <CardPanel heading="Preferences">
                     <div class="flex items-center justify-between gap-3">
@@ -53,18 +82,20 @@
 </template>
 
 <script>
-import { Header, CardPanel, Table, TableRow, TableCell, Badge, Switch, Description } from '@statamic/cms/ui';
+import { Header, CardPanel, Table, TableRow, TableCell, Badge, Switch, Description, Alert } from '@statamic/cms/ui';
 import AssistantChat from './AssistantChat.vue';
 import AssistantMascot from './AssistantMascot.vue';
 
 export default {
-    components: { Header, CardPanel, Table, TableRow, TableCell, Badge, Switch, Description, AssistantChat, AssistantMascot },
+    components: { Header, CardPanel, Table, TableRow, TableCell, Badge, Switch, Description, Alert, AssistantChat, AssistantMascot },
 
     props: {
         configured: Boolean,
         model: String,
         provider: String,
         showBubble: Boolean,
+        builderField: { type: String, default: null },
+        catalogCollection: { type: String, default: null },
     },
 
     data() {

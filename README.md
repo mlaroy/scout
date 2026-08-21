@@ -54,9 +54,11 @@ return [
 ];
 ```
 
-A vanilla Statamic site leaves the first two null and still gets a genuinely useful assistant: drafting and revising entries in any collection, validated against blueprints. A site with a component/page-builder system points Scout at it and gets component-aware page composition. The [Cascadia starter kit](https://statamic.com/starter-kits/mlaroy/cascadia) ships this file pre-filled.
+A vanilla Statamic site leaves the first two null and still gets a genuinely useful assistant: drafting and revising entries in any collection, validated against blueprints. A site with a component/page-builder system points Scout at it and gets component-aware page composition. Scout ships no assumptions about any particular kit's field or collection handles — including the [Cascadia starter kit](https://statamic.com/starter-kits/mlaroy/cascadia), which doesn't require or configure Scout at all. If you're running both, publish this config yourself and set these two keys to Cascadia's own handles: `'page_builder_field' => 'page_blocks'` and `'catalog_collection' => 'components'`.
 
 The catalog collection, when configured, should hold one entry per builder component with `description`, `use_when`, `avoid_when`, and `content_expectations` fields — Scout reads these when deciding which components fit a brief.
+
+**System → Scout** shows the current state of both — a status table with each field's configured handle (or "Not set"), and a notice explaining exactly what capability is missing and why when either is null. Nothing is silently degraded without telling you.
 
 ## Permissions
 

@@ -68,15 +68,9 @@
 }
 .assistant-message-body { white-space: pre-wrap; word-break: break-word; }
 .assistant-busy { font-style: italic; color: color-mix(in oklab, currentColor 72%, transparent); }
-.assistant-draft-link {
-    display: block; margin-top: 0.55rem; padding: 0.4rem 0.7rem;
-    font-weight: 600; text-decoration: none; text-align: center;
-    border-radius: 0.5rem;
-    background: var(--theme-color-content-bg);
-    color: var(--theme-color-ui-accent-bg);
-    border: 1px solid var(--theme-color-content-border);
-}
-.assistant-draft-link:hover { text-decoration: underline; }
+/* Colors/border come from the ui Button component (variant="primary") —
+   this just places it under the message it belongs to. */
+.assistant-draft-link { display: flex; margin-top: 0.55rem; width: 100%; justify-content: center; }
 
 .assistant-actions { display: flex; gap: 0.5rem; padding: 0 1rem 0.6rem; }
 /* Quick actions use Statamic's ui Button (size xs) */

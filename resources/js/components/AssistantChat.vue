@@ -10,9 +10,14 @@
             <TransitionGroup name="assistant-msg">
                 <div v-for="(message, index) in messages" :key="message.key ?? index" :class="['assistant-message', message.role]">
                     <div class="assistant-message-body" v-html="renderBody(message.content)"></div>
-                    <a v-if="message.draft" :href="message.draft.edit_url" class="assistant-draft-link">
-                        Review draft: {{ message.draft.title }} ({{ message.draft.sections.length }} sections) &rarr;
-                    </a>
+                    <Button
+                        v-if="message.draft"
+                        :href="message.draft.edit_url"
+                        variant="primary"
+                        size="sm"
+                        class="assistant-draft-link"
+                        :text="`Review draft: ${message.draft.title} (${message.draft.sections.length} sections) →`"
+                    />
                 </div>
             </TransitionGroup>
 
