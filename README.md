@@ -90,18 +90,6 @@ Setting `GEMINI_API_KEY` then makes it eligible for auto-detection like any bund
 - `php artisan pages:revise <entry-id> plan.yaml [--dry-run]` — apply a revised plan to an existing entry: drafts update in place, published entries (revisions required) save as a working copy for CP review.
 - MCP tools `validate-page-plan`, `assemble-page`, and `revise-page` register with Laravel Boost's MCP server automatically when `laravel/mcp` is present — AI coding agents get the same validated write path.
 
-## Development
+## Contributing
 
-```bash
-composer install
-composer test          # PHPUnit via Testbench
-npm install && npm run build   # control panel assets (pre-built dist is committed)
-```
-
-In a host site consuming this addon via a local path repository, `npm run build` only rebuilds `addons/mlaroy/scout/public/build/` — it does **not** touch the copy Statamic actually serves at `public/vendor/scout/`. That copy is made once, automatically, on first install, and never again on its own. After any CP asset change, republish it:
-
-```bash
-php artisan vendor:publish --tag=scout --force
-```
-
-Skip this and the control panel keeps serving whatever was built at install time — no error, just stale JS silently ignoring your changes (e.g. the chat bubble not appearing, or still hitting old routes).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local development setup.
