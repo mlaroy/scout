@@ -2,7 +2,7 @@
 
 An AI content assistant for the Statamic control panel, with a validated write pipeline underneath it. Scout goes by a Sasquatch's reputation: rarely seen working, reliably leaves finished drafts behind.
 
-Editors get a chat bubble in the control panel (and a full page under **System → Assistant**) where they can paste rough content and get back an unpublished draft page, ask which content structure suits a piece of content, or revise a draft conversationally ("make the hero dark and drop the stats section").
+Editors get a chat bubble in the control panel (and a full page under **System → Scout**) where they can paste rough content and get back an unpublished draft page, ask which content structure suits a piece of content, or revise a draft conversationally ("make the hero dark and drop the stats section").
 
 ## How it writes
 
@@ -60,13 +60,9 @@ The catalog collection, when configured, should hold one entry per builder compo
 
 ## Permissions
 
-Scout registers a **"use assistant"** permission (chat, drafting). Super users pass automatically. Host sites can register their own permissions into the same "assistant" group.
+Scout registers a **"use assistant"** permission (chat, drafting), in its own "assistant" permission group. Super users pass automatically. This group is Scout's exclusively — it has no knowledge of, and no dependency on, anything a host site or kit built on top of it does. A host wanting its own permissions (for its own tooling, unrelated to Scout) registers its own group rather than extending this one.
 
 Inside a chat, reads are scoped to the signed-in editor's own CP permissions: search, page contents, and collection field listings only surface collections the user could open themselves ("view {handle} entries"), and asset search only surfaces containers they can view. Collections in `excluded_collections` stay invisible to everyone. All queries run through Statamic's own repositories (Stache / configured search index) — the model can only call Scout's fixed tools; it has no query language and no API access.
-
-## Quick actions are host-aware
-
-The audit/sync quick-action chips and their command palette entries wrap *host-site* artisan commands (`components:audit`, `components:sync`). Scout checks whether those commands exist and only shows the actions when they do — on a site without them, the chips simply don't render.
 
 ## Swapping the AI provider
 
@@ -101,3 +97,11 @@ composer install
 composer test          # PHPUnit via Testbench
 npm install && npm run build   # control panel assets (pre-built dist is committed)
 ```
+
+In a host site consuming this addon via a local path repository, `npm run build` only rebuilds `addons/mlaroy/scout/public/build/` — it does **not** touch the copy Statamic actually serves at `public/vendor/scout/`. That copy is made once, automatically, on first install, and never again on its own. After any CP asset change, republish it:
+
+```bash
+php artisan vendor:publish --tag=scout --force
+```
+
+Skip this and the control panel keeps serving whatever was built at install time — no error, just stale JS silently ignoring your changes (e.g. the chat bubble not appearing, or still hitting old routes).
