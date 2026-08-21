@@ -72,9 +72,9 @@ Inside a chat, reads are scoped to the signed-in editor's own CP permissions: se
 
 The code talks to the small `Cascadia\Scout\AssistantClient` interface. Scout ships two implementations: `AnthropicAssistantClient` (Claude) and `OpenAIAssistantClient`, a generic OpenAI Chat Completions-compatible client that also serves xAI's Grok, since it exposes the same wire format at a different base URL.
 
-`config('scout.providers')` lists each provider's client class, API key, base URL (OpenAI-compatible providers only), and model. `ProviderManager` picks the active one: an explicit `SCOUT_PROVIDER` override if its `api_key` is set, otherwise the first provider in that list with an `api_key` present — `anthropic`, then `openai`, then `xai`.
+`config('scout-assistant.providers')` lists each provider's client class, API key, base URL (OpenAI-compatible providers only), and model. `ProviderManager` picks the active one: an explicit `SCOUT_PROVIDER` override if its `api_key` is set, otherwise the first provider in that list with an `api_key` present — `anthropic`, then `openai`, then `xai`.
 
-To add another provider (say, Gemini), implement `AssistantClient` and add an entry to `config('scout.providers')`:
+To add another provider (say, Gemini), implement `AssistantClient` and add an entry to `config('scout-assistant.providers')`:
 
 ```php
 'gemini' => [
