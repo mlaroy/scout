@@ -46,7 +46,7 @@
                     </Table>
                     <Description class="mt-3">
                         <template v-if="!configured">Set <code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, or <code>XAI_API_KEY</code> in <code>.env</code> to enable chat.</template>
-                        <template v-else>Want a different LLM provider? Implement the <code>Cascadia\Scout\AssistantClient</code> contract and add it to <code>config('scout.providers')</code>.</template>
+                        <template v-else>Want a different LLM provider? Implement the <code>Cascadia\Scout\AssistantClient</code> contract and add it to <code>config('scout-assistant.providers')</code>.</template>
                     </Description>
                 </CardPanel>
 
@@ -63,7 +63,7 @@
                             Scout is drafting page sections without catalog judgment — it's choosing components on general reasoning rather than your catalog's <code>use_when</code>/<code>avoid_when</code> guidance.
                         </span>
                         <br><br>
-                        Set <code>page_builder_field</code> and <code>catalog_collection</code> in <code>config/scout.php</code> to unlock this — see the README's Configuration section.
+                        Set <code>page_builder_field</code> and <code>catalog_collection</code> in <code>config/scout-assistant.php</code> to unlock this — see the README's Configuration section.
                     </Description>
                 </Alert>
 

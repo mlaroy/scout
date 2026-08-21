@@ -33,7 +33,7 @@ class AssistantController
             'provider' => $providers->label(),
             'showBubble' => User::current()->preferences()['assistant']['show_bubble'] ?? true,
             'builderField' => $site->builderField(),
-            'catalogCollection' => config('scout.catalog_collection'),
+            'catalogCollection' => config('scout-assistant.catalog_collection'),
         ]);
     }
 

@@ -14,10 +14,10 @@ class OpenAIAssistantClientTest extends TestCase
     {
         parent::setUp();
 
-        config(['scout.providers.openai.api_key' => 'sk-test']);
-        config(['scout.providers.openai.base_url' => 'https://api.openai.com/v1']);
-        config(['scout.providers.openai.model' => 'gpt-5.1']);
-        config(['scout.providers.openai.max_tokens' => 8192]);
+        config(['scout-assistant.providers.openai.api_key' => 'sk-test']);
+        config(['scout-assistant.providers.openai.base_url' => 'https://api.openai.com/v1']);
+        config(['scout-assistant.providers.openai.model' => 'gpt-5.1']);
+        config(['scout-assistant.providers.openai.max_tokens' => 8192]);
     }
 
     public function test_a_plain_text_reply_is_returned_as_end_turn(): void

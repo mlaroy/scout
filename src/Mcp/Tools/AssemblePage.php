@@ -55,7 +55,7 @@ class AssemblePage extends Tool
             'collection' => $entry->collectionHandle(),
             'published' => false,
             'edit_url' => url("/cp/collections/{$entry->collectionHandle()}/entries/{$entry->id()}"),
-            'sections' => collect($entry->get(config('scout.page_builder_field')))->pluck('type')->all(),
+            'sections' => collect($entry->get(config('scout-assistant.page_builder_field')))->pluck('type')->all(),
         ]);
     }
 }

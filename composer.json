@@ -51,7 +51,8 @@
     "extra": {
         "statamic": {
             "name": "Scout",
-            "description": "AI content assistant and write pipeline for Statamic"
+            "description": "AI content assistant and write pipeline for Statamic",
+            "slug": "scout-assistant"
         },
         "laravel": {
             "providers": [

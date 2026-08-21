@@ -25,8 +25,10 @@ Set one of `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `XAI_API_KEY` in `.env` —
 Publish the config if you want to change it:
 
 ```bash
-php artisan vendor:publish --tag=scout-config
+php artisan vendor:publish --tag=scout-assistant-config
 ```
+
+(The package is still `mlaroy/scout` and CP assets still publish to `public/vendor/scout/`, but the config file and its publish tags are namespaced `scout-assistant` — `config/scout.php` collides with [Laravel Scout](https://laravel.com/docs/scout), the unrelated full-text search package, so this addon deliberately doesn't use that filename.)
 
 ## Configuration
 

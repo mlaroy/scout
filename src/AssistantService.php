@@ -39,7 +39,7 @@ class AssistantService
         $onText = $onEvent ? fn (string $delta) => $emit(['type' => 'text', 'delta' => $delta]) : null;
         $onActivity = $onEvent ? fn (array $activity) => $emit(['type' => 'progress', 'label' => $this->activityLabel($activity)]) : null;
 
-        for ($iteration = 0; $iteration < config('scout.max_iterations'); $iteration++) {
+        for ($iteration = 0; $iteration < config('scout-assistant.max_iterations'); $iteration++) {
             $response = $this->client->complete($this->systemPrompt($context), $messages, $this->tools(), $onText, $onActivity);
 
             if ($response['stop_reason'] !== 'tool_use') {
@@ -273,7 +273,7 @@ class AssistantService
     {
         $collection = Collection::find($handle);
 
-        if (! $collection || in_array($handle, config('scout.excluded_collections', [])) || ! $this->userCanViewCollection($handle)) {
+        if (! $collection || in_array($handle, config('scout-assistant.excluded_collections', [])) || ! $this->userCanViewCollection($handle)) {
             return "Unknown or off-limits collection \"{$handle}\".";
         }
 
@@ -319,7 +319,7 @@ class AssistantService
             return "No entry with id \"{$entryId}\".";
         }
 
-        if (in_array($entry->collectionHandle(), config('scout.excluded_collections', [])) || ! $this->userCanViewCollection($entry->collectionHandle())) {
+        if (in_array($entry->collectionHandle(), config('scout-assistant.excluded_collections', [])) || ! $this->userCanViewCollection($entry->collectionHandle())) {
             return "No entry with id \"{$entryId}\".";
         }
 
@@ -368,7 +368,7 @@ class AssistantService
         $query = mb_strtolower(trim($query));
 
         $collections = collect(Collection::handles())
-            ->reject(fn ($handle) => in_array($handle, config('scout.excluded_collections', [])))
+            ->reject(fn ($handle) => in_array($handle, config('scout-assistant.excluded_collections', [])))
             ->filter(fn ($handle) => $this->userCanViewCollection($handle))
             ->when($collection, fn ($handles) => $handles->filter(fn ($handle) => $handle === $collection))
             ->values()
@@ -429,7 +429,7 @@ class AssistantService
             return collect();
         }
 
-        if ($query !== '' && ($index = config('scout.search_index'))) {
+        if ($query !== '' && ($index = config('scout-assistant.search_index'))) {
             try {
                 return collect(Search::index($index)->ensureExists()->search($query)->get())
                     ->map(fn ($result) => method_exists($result, 'getSearchable') ? $result->getSearchable() : $result)
@@ -693,7 +693,7 @@ class AssistantService
         ])->values()->toJson();
 
         $collections = collect(Collection::handles())
-            ->reject(fn ($handle) => in_array($handle, config('scout.excluded_collections', [])))
+            ->reject(fn ($handle) => in_array($handle, config('scout-assistant.excluded_collections', [])))
             ->filter(fn ($handle) => $this->userCanViewCollection($handle))
             ->map(fn ($handle) => $handle.(Collection::find($handle)->dated() ? ' (dated)' : ''))
             ->implode(', ');

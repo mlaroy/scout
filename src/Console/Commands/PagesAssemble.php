@@ -63,7 +63,7 @@ class PagesAssemble extends Command
             return self::FAILURE;
         }
 
-        $sections = $result['data'][config('scout.page_builder_field')] ?? [];
+        $sections = $result['data'][config('scout-assistant.page_builder_field')] ?? [];
 
         $this->components->info(sprintf(
             'Draft created: %s (%d section%s)',

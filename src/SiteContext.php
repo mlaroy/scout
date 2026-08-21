@@ -19,7 +19,7 @@ class SiteContext
 
     public function builderField(): ?string
     {
-        return config('scout.page_builder_field');
+        return config('scout-assistant.page_builder_field');
     }
 
     /**
@@ -50,7 +50,7 @@ class SiteContext
      */
     public function catalogEntries(): Collection
     {
-        if (! ($catalogCollection = config('scout.catalog_collection'))) {
+        if (! ($catalogCollection = config('scout-assistant.catalog_collection'))) {
             return collect();
         }
 

@@ -78,7 +78,7 @@ class PagesRevise extends Command
             return self::FAILURE;
         }
 
-        $sections = $revised->get(config('scout.page_builder_field')) ?? [];
+        $sections = $revised->get(config('scout-assistant.page_builder_field')) ?? [];
 
         $this->components->info(sprintf(
             $wasPublished

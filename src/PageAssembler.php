@@ -40,7 +40,7 @@ class PageAssembler
         }
 
         $data = $result['data'];
-        $builderField = config('scout.page_builder_field');
+        $builderField = config('scout-assistant.page_builder_field');
 
         $this->guardCollection($data['collection']);
 
@@ -139,7 +139,7 @@ class PageAssembler
 
     protected function guardCollection(string $handle): void
     {
-        if (in_array($handle, config('scout.excluded_collections', []))) {
+        if (in_array($handle, config('scout-assistant.excluded_collections', []))) {
             throw new RuntimeException("The \"{$handle}\" collection is off-limits to the assistant.");
         }
     }
@@ -171,7 +171,7 @@ class PageAssembler
         }
 
         $data = $result['data'];
-        $builderField = config('scout.page_builder_field');
+        $builderField = config('scout-assistant.page_builder_field');
 
         $target
             ->set('title', $data['title'])

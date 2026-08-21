@@ -34,7 +34,7 @@ use Tiptap\Editor;
  * are collected with enough context for an AI (or human) to self-correct.
  *
  * Section-style plans require a page builder field, named by
- * config('scout.page_builder_field'); its sets are discovered from the
+ * config('scout-assistant.page_builder_field'); its sets are discovered from the
  * collection's entry blueprint. Document-style plans (validateEntry)
  * work on any site.
  */
@@ -52,7 +52,7 @@ class PagePlanValidator
     {
         $this->errors = [];
 
-        $builderField = config('scout.page_builder_field');
+        $builderField = config('scout-assistant.page_builder_field');
 
         if (! $builderField) {
             $this->error('plan: section-style plans are unavailable on this site — no page builder field is configured (scout.page_builder_field). Use a document-style plan instead.');
@@ -198,7 +198,7 @@ class PagePlanValidator
      */
     protected function validateFields(Collection $fields, array $values, string $context): array
     {
-        $excluded = config('scout.excluded_fields', []);
+        $excluded = config('scout-assistant.excluded_fields', []);
 
         $normalized = [];
 

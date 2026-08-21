@@ -61,7 +61,7 @@ class RevisePage extends Tool
             'slug' => $revised->slug(),
             'collection' => $revised->collectionHandle(),
             'edit_url' => url("/cp/collections/{$revised->collectionHandle()}/entries/{$revised->id()}"),
-            'sections' => collect($revised->get(config('scout.page_builder_field')))->pluck('type')->all(),
+            'sections' => collect($revised->get(config('scout-assistant.page_builder_field')))->pluck('type')->all(),
         ]);
     }
 }

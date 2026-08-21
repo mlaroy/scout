@@ -10,7 +10,7 @@ use RuntimeException;
 /**
  * Talks to any OpenAI Chat Completions-compatible API (OpenAI itself, or
  * xAI's Grok, which exposes the same wire format at a different base URL —
- * see config('scout.providers.openai'/'xai')).
+ * see config('scout-assistant.providers.openai'/'xai')).
  *
  * AssistantService and the rest of the app only ever see Anthropic-shaped
  * content blocks (see AssistantClient::complete()'s docblock), so this

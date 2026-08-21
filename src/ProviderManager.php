@@ -3,8 +3,8 @@
 namespace Cascadia\Scout;
 
 /**
- * Resolves which configured AI provider (config('scout.providers')) is
- * active — an explicit config('scout.provider') override if it has an
+ * Resolves which configured AI provider (config('scout-assistant.providers')) is
+ * active — an explicit config('scout-assistant.provider') override if it has an
  * api_key, otherwise the first provider in config order that does.
  */
 class ProviderManager
@@ -14,12 +14,12 @@ class ProviderManager
      */
     protected function providers(): array
     {
-        return config('scout.providers', []);
+        return config('scout-assistant.providers', []);
     }
 
     public function active(): ?string
     {
-        $explicit = config('scout.provider');
+        $explicit = config('scout-assistant.provider');
 
         if ($explicit && $this->hasApiKey($explicit)) {
             return $explicit;

@@ -11,7 +11,7 @@ class PagePlanValidatorTest extends TestCase
     {
         parent::setUp();
 
-        config(['scout.page_builder_field' => 'page_builder']);
+        config(['scout-assistant.page_builder_field' => 'page_builder']);
     }
 
     public function test_it_validates_a_section_plan_and_normalizes_values(): void
@@ -77,7 +77,7 @@ class PagePlanValidatorTest extends TestCase
 
     public function test_section_plans_are_unavailable_without_a_builder_field(): void
     {
-        config(['scout.page_builder_field' => null]);
+        config(['scout-assistant.page_builder_field' => null]);
 
         $result = app(PagePlanValidator::class)->validate([
             'title' => 'No Builder',
@@ -113,7 +113,7 @@ class PagePlanValidatorTest extends TestCase
 
     public function test_excluded_fields_are_refused_everywhere(): void
     {
-        config(['scout.excluded_fields' => ['secret_flag']]);
+        config(['scout-assistant.excluded_fields' => ['secret_flag']]);
 
         $result = app(PagePlanValidator::class)->validateEntry([
             'collection' => 'articles',

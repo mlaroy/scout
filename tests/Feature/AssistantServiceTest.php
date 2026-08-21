@@ -14,7 +14,7 @@ class AssistantServiceTest extends TestCase
     {
         parent::setUp();
 
-        config(['scout.page_builder_field' => 'page_builder']);
+        config(['scout-assistant.page_builder_field' => 'page_builder']);
     }
 
     public function test_it_answers_without_tools(): void
@@ -101,7 +101,7 @@ class AssistantServiceTest extends TestCase
 
     public function test_it_gives_up_gracefully_after_max_iterations(): void
     {
-        config(['scout.max_iterations' => 2]);
+        config(['scout-assistant.max_iterations' => 2]);
 
         $badCall = ['id' => 't', 'name' => 'draft_page', 'input' => ['plan' => ['title' => 'X', 'sections' => [['component' => 'nope', 'fields' => []]]]]];
 

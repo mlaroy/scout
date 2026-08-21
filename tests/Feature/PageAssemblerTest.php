@@ -14,7 +14,7 @@ class PageAssemblerTest extends TestCase
     {
         parent::setUp();
 
-        config(['scout.page_builder_field' => 'page_builder']);
+        config(['scout-assistant.page_builder_field' => 'page_builder']);
     }
 
     public function test_it_assembles_an_unpublished_draft(): void
@@ -57,7 +57,7 @@ class PageAssemblerTest extends TestCase
 
     public function test_excluded_collections_are_off_limits(): void
     {
-        config(['scout.excluded_collections' => ['articles']]);
+        config(['scout-assistant.excluded_collections' => ['articles']]);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/off-limits/');
