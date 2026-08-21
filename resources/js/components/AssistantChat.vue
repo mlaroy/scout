@@ -35,17 +35,12 @@
         </div>
         </div>
 
-        <div class="assistant-actions">
-            <Button v-if="canAudit" size="xs" :disabled="busy" @click="runAudit">Run audit</Button>
-            <Button v-if="canSync" size="xs" :disabled="busy" @click="runSync">Sync catalog</Button>
-        </div>
-
         <form class="assistant-input" @submit.prevent="send">
             <textarea
                 v-model="input"
                 aria-label="Message the assistant"
                 :rows="standalone ? 5 : 4"
-                :placeholder="configured ? 'Describe the page you want, or ask a question…' : 'Set an AI provider API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY) to enable chat. Quick actions still work.'"
+                :placeholder="configured ? 'Describe the page you want, or ask a question…' : 'Set an AI provider API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY) to enable chat.'"
                 :disabled="busy || !configured"
                 @keydown.meta.enter.prevent="send"
             ></textarea>
@@ -63,8 +58,6 @@ export default {
 
     props: {
         configured: { type: Boolean, default: false },
-        canAudit: { type: Boolean, default: false },
-        canSync: { type: Boolean, default: false },
         standalone: { type: Boolean, default: false },
     },
 
@@ -125,9 +118,7 @@ export default {
             this.busy = true;
             this.scrollDown();
 
-            const payload = this.messages
-                .filter((message) => !message.action)
-                .map(({ role, content }) => ({ role, content }));
+            const payload = this.messages.map(({ role, content }) => ({ role, content }));
 
             this.streamChat({ messages: payload, context: this.entryContext() })
                 .catch((error) => {
@@ -142,7 +133,7 @@ export default {
         },
 
         async streamChat(body) {
-            const response = await fetch('/cp/assistant/chat', {
+            const response = await fetch('/cp/scout/chat', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -221,35 +212,6 @@ export default {
                 this.streamingText = '';
                 this.scrollDown();
             }
-        },
-
-        runAudit() {
-            this.busy = true;
-
-            this.$axios
-                .post('/cp/assistant/actions/audit')
-                .then((response) => {
-                    if (response.data.passed) {
-                        this.$toast.success('Component audit passed');
-                    } else {
-                        this.push({ role: 'assistant', action: true, content: response.data.output });
-                        this.$emit('activity');
-                        this.scrollDown();
-                    }
-                })
-                .finally(() => (this.busy = false));
-        },
-
-        runSync() {
-            this.busy = true;
-
-            this.$axios
-                .post('/cp/assistant/actions/sync')
-                .then((response) => {
-                    this.push({ role: 'assistant', action: true, content: response.data.output });
-                    this.scrollDown();
-                })
-                .finally(() => (this.busy = false));
         },
 
         scrollDown() {

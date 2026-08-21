@@ -28,7 +28,7 @@
                 <button class="assistant-panel-close" aria-label="Close" @click="close">&times;</button>
             </header>
 
-            <assistant-chat ref="chat" :configured="configured" :can-audit="canAudit" :can-sync="canSync" @activity="open = true" />
+            <assistant-chat ref="chat" :configured="configured" />
         </div>
     </div>
 </template>
@@ -45,18 +45,14 @@ export default {
             open: false,
             configured: false,
             canChat: false,
-            canAudit: false,
-            canSync: false,
             showBubble: true,
         };
     },
 
     created() {
-        this.$axios.get('/cp/assistant/boot').then((response) => {
+        this.$axios.get('/cp/scout/boot').then((response) => {
             this.configured = response.data.configured;
             this.canChat = response.data.can_chat;
-            this.canAudit = response.data.can_audit;
-            this.canSync = response.data.can_sync;
             this.showBubble = response.data.show_bubble;
 
             this.registerCommandPalette();
@@ -71,17 +67,21 @@ export default {
 
     methods: {
         // Registered after boot so entries match what the user can
-        // actually do here (permissions, and whether the host site has
-        // the audit command at all).
+        // actually do here (permissions).
         registerCommandPalette() {
             if (!this.canChat) return;
 
             const assistant = (detail) => () => window.dispatchEvent(new CustomEvent('assistant', { detail }));
 
+            // persist: true — the palette clears all non-persisted
+            // commands on every CP navigation (Statamic's own router
+            // 'start' handler), so without it these vanish after the
+            // first page.
             Statamic.$commandPalette.add({
                 category: Statamic.$commandPalette.category.Actions,
                 text: ['Scout', 'Ask the assistant'],
                 icon: 'ai-chat-spark',
+                persist: true,
                 action: assistant('open'),
             });
 
@@ -89,26 +89,9 @@ export default {
                 category: Statamic.$commandPalette.category.Actions,
                 text: ['Scout', 'Draft a page from content'],
                 icon: 'entry',
+                persist: true,
                 action: assistant('draft'),
             });
-
-            if (this.canAudit) {
-                Statamic.$commandPalette.add({
-                    category: Statamic.$commandPalette.category.Actions,
-                    text: ['Cascadia', 'Run component audit'],
-                    icon: 'checkmark',
-                    action: assistant('audit'),
-                });
-            }
-
-            if (this.canSync) {
-                Statamic.$commandPalette.add({
-                    category: Statamic.$commandPalette.category.Actions,
-                    text: ['Cascadia', 'Sync component catalog'],
-                    icon: 'sync',
-                    action: assistant('sync'),
-                });
-            }
         },
 
         openPanel() {
@@ -161,18 +144,6 @@ export default {
             }
 
             if (!this.canChat) return;
-
-            if (event.detail === 'audit') {
-                this.openPanel();
-                this.$nextTick(() => this.$refs.chat?.runAudit());
-                return;
-            }
-
-            if (event.detail === 'sync') {
-                this.openPanel();
-                this.$nextTick(() => this.$refs.chat?.runSync());
-                return;
-            }
 
             this.openPanel();
 

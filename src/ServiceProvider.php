@@ -67,18 +67,19 @@ class ServiceProvider extends AddonServiceProvider
     protected function registerNav(): void
     {
         Nav::extend(function ($nav) {
-            $nav->create('Assistant')
+            $nav->create('Scout')
                 ->section('System')
-                ->url('assistant')
+                ->url('scout')
                 ->icon('ai-chat-spark')
                 ->can('use assistant');
         });
     }
 
     /**
-     * The permission gating the assistant itself. Host sites may register
-     * further permissions into the same group (the kit adds its catalog
-     * sync there); super users pass all checks.
+     * The permission gating the assistant itself. Scout owns this group
+     * exclusively — host sites needing their own permissions register a
+     * group of their own rather than extending this one; super users
+     * pass all checks regardless.
      */
     protected function registerPermissions(): void
     {

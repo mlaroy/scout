@@ -10,7 +10,6 @@ use Cascadia\Scout\AssistantService;
 use Cascadia\Scout\ProviderManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -29,8 +28,6 @@ class AssistantController
         return Inertia::render('AssistantPage', [
             'title' => 'Assistant',
             'configured' => $providers->configured(),
-            'canAudit' => $this->hasCommand('components:audit'),
-            'canSync' => User::current()->can('sync component catalog') && $this->hasCommand('components:sync'),
             'model' => $providers->model(),
             'provider' => $providers->label(),
             'showBubble' => User::current()->preferences()['assistant']['show_bubble'] ?? true,
@@ -58,19 +55,8 @@ class AssistantController
         return response()->json([
             'configured' => $providers->configured(),
             'can_chat' => $user->can('use assistant'),
-            'can_audit' => $this->hasCommand('components:audit'),
-            'can_sync' => $user->can('sync component catalog') && $this->hasCommand('components:sync'),
             'show_bubble' => $user->preferences()['assistant']['show_bubble'] ?? true,
         ]);
-    }
-
-    /**
-     * Quick actions wrap host-site artisan commands (the kit's conventions
-     * tooling). On a site without them, the chips simply don't render.
-     */
-    protected function hasCommand(string $name): bool
-    {
-        return array_key_exists($name, Artisan::all());
     }
 
     public function chat(Request $request, AssistantService $assistant, ProviderManager $providers): JsonResponse|StreamedResponse
@@ -158,33 +144,5 @@ class AssistantController
             $exception instanceof RuntimeException => tap($exception->getMessage(), fn () => report($exception)),
             default => tap('Something went wrong — check the logs for details.', fn () => report($exception)),
         };
-    }
-
-    public function audit(): JsonResponse
-    {
-        abort_unless(User::current()->can('use assistant'), 403);
-
-        abort_unless($this->hasCommand('components:audit'), 404);
-
-        $exitCode = Artisan::call('components:audit');
-
-        return response()->json([
-            'passed' => $exitCode === 0,
-            'output' => trim(Artisan::output()),
-        ]);
-    }
-
-    public function sync(Request $request): JsonResponse
-    {
-        abort_unless($this->hasCommand('components:sync'), 404);
-
-        abort_unless(User::current()->can('sync component catalog'), 403);
-
-        $exitCode = Artisan::call('components:sync', $request->boolean('prune') ? ['--prune' => true] : []);
-
-        return response()->json([
-            'passed' => $exitCode === 0,
-            'output' => trim(Artisan::output()),
-        ]);
     }
 }

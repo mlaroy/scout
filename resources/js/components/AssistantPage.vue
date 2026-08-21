@@ -9,7 +9,7 @@
 
         <div class="assistant-page-grid">
             <div class="assistant-page-chat">
-                <assistant-chat ref="chat" :configured="configured" :can-audit="canAudit" :can-sync="canSync" standalone />
+                <assistant-chat ref="chat" :configured="configured" standalone />
             </div>
 
             <aside class="assistant-page-sidebar">
@@ -62,8 +62,6 @@ export default {
 
     props: {
         configured: Boolean,
-        canAudit: Boolean,
-        canSync: Boolean,
         model: String,
         provider: String,
         showBubble: Boolean,
@@ -79,7 +77,7 @@ export default {
     methods: {
         saveBubble() {
             this.$axios
-                .post('/cp/assistant/preferences', { show_bubble: this.bubble })
+                .post('/cp/scout/preferences', { show_bubble: this.bubble })
                 .then(() => {
                     this.$toast.success(this.bubble ? 'Bubble enabled' : 'Bubble hidden');
                     window.dispatchEvent(new CustomEvent('assistant', { detail: this.bubble ? 'show-bubble' : 'hide-bubble' }));
