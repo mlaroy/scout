@@ -31,6 +31,9 @@ return [
             'api_key' => env('ANTHROPIC_API_KEY'),
             'model' => env('SCOUT_MODEL', 'claude-opus-4-8'),
             'max_tokens' => env('SCOUT_MAX_TOKENS', 8192),
+            // Claude has native PDF understanding, so only this client
+            // accepts document attachments (see AssistantController::chat()).
+            'supports_attachments' => true,
         ],
 
         'openai' => [

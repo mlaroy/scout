@@ -57,6 +57,11 @@ class ProviderManager
         return $this->config()['model'] ?? null;
     }
 
+    public function supportsAttachments(): bool
+    {
+        return (bool) ($this->config()['supports_attachments'] ?? false);
+    }
+
     public function makeClient(): AssistantClient
     {
         abort_unless($this->configured(), 422, 'No AI provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY.');

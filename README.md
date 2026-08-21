@@ -62,6 +62,10 @@ The catalog collection, when configured, should hold one entry per builder compo
 
 **System → Scout** shows the current state of both — a status table with each field's configured handle (or "Not set"), and a notice explaining exactly what capability is missing and why when either is null. Nothing is silently degraded without telling you.
 
+## Attachments
+
+When Claude is the active provider, editors can drag a PDF into the chat (or use the attach button) and Scout drafts directly from its contents — Claude reads the PDF natively, no separate extraction step. Attachments are capped at 10MB and PDF-only for now. This is gated on Claude's native document support, so it isn't available when OpenAI or xAI is the active provider (`ProviderManager::supportsAttachments()`).
+
 ## Permissions
 
 Scout registers a **"use assistant"** permission (chat, drafting), in its own "assistant" permission group. Super users pass automatically. This group is Scout's exclusively — it has no knowledge of, and no dependency on, anything a host site or kit built on top of it does. A host wanting its own permissions (for its own tooling, unrelated to Scout) registers its own group rather than extending this one.

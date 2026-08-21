@@ -28,7 +28,7 @@
                 <button class="assistant-panel-close" aria-label="Close" @click="close">&times;</button>
             </header>
 
-            <assistant-chat ref="chat" :configured="configured" />
+            <assistant-chat ref="chat" :configured="configured" :supports-attachments="supportsAttachments" />
         </div>
     </div>
 </template>
@@ -46,6 +46,7 @@ export default {
             configured: false,
             canChat: false,
             showBubble: true,
+            supportsAttachments: false,
         };
     },
 
@@ -54,6 +55,7 @@ export default {
             this.configured = response.data.configured;
             this.canChat = response.data.can_chat;
             this.showBubble = response.data.show_bubble;
+            this.supportsAttachments = response.data.supports_attachments;
 
             this.registerCommandPalette();
         });

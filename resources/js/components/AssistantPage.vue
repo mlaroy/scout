@@ -9,7 +9,7 @@
 
         <div class="assistant-page-grid">
             <div class="assistant-page-chat">
-                <assistant-chat ref="chat" :configured="configured" standalone />
+                <assistant-chat ref="chat" :configured="configured" :supports-attachments="supportsAttachments" standalone />
             </div>
 
             <aside class="assistant-page-sidebar">
@@ -96,6 +96,7 @@ export default {
         showBubble: Boolean,
         builderField: { type: String, default: null },
         catalogCollection: { type: String, default: null },
+        supportsAttachments: Boolean,
     },
 
     data() {

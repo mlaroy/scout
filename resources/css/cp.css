@@ -86,6 +86,43 @@
 }
 .assistant-send { align-self: flex-end; }
 
+/* Attachments (Claude-only PDF drag/drop or click-to-attach) */
+.assistant-dragging { outline: 2px dashed var(--theme-color-ui-accent-bg); outline-offset: -2px; }
+.assistant-file-input { display: none; }
+.assistant-attach-button {
+    align-self: flex-end;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.1rem; height: 2.1rem; flex: none;
+    border: 1px solid var(--theme-color-content-border);
+    border-radius: 0.5rem; background: transparent; color: inherit; cursor: pointer;
+}
+.assistant-attach-button svg { width: 1.1rem; height: 1.1rem; }
+.assistant-attach-button:hover:not(:disabled) { background: color-mix(in oklab, currentColor 8%, transparent); }
+.assistant-attach-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.assistant-pending-attachment {
+    display: flex; align-items: center; gap: 0.4rem;
+    margin: 0 1rem; padding: 0.35rem 0.6rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--theme-color-content-border);
+    border-radius: 0.5rem;
+    background: color-mix(in oklab, currentColor 6%, transparent);
+}
+.assistant-pending-attachment-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assistant-pending-attachment-remove {
+    border: none; background: none; cursor: pointer; color: inherit; line-height: 1; font-size: 1.1rem;
+    width: 1.25rem; height: 1.25rem; display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+
+.assistant-attachment-chip {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    margin-bottom: 0.3rem; padding: 0.2rem 0.5rem;
+    font-size: 0.75rem; font-weight: 600;
+    border-radius: 0.4rem;
+    background: color-mix(in oklab, currentColor 12%, transparent);
+}
+.assistant-attachment-icon { width: 0.9rem; height: 0.9rem; flex: none; }
+
 /* Assistant full page (native Header/CardPanel; grid + chat container are ours) */
 .assistant-page-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
 @media (min-width: 900px) { .assistant-page-grid { grid-template-columns: 2fr 1fr; } }

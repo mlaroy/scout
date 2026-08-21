@@ -34,6 +34,7 @@ class AssistantController
             'showBubble' => User::current()->preferences()['assistant']['show_bubble'] ?? true,
             'builderField' => $site->builderField(),
             'catalogCollection' => config('scout-assistant.catalog_collection'),
+            'supportsAttachments' => $providers->supportsAttachments(),
         ]);
     }
 
@@ -59,6 +60,7 @@ class AssistantController
             'configured' => $providers->configured(),
             'can_chat' => $user->can('use assistant'),
             'show_bubble' => $user->preferences()['assistant']['show_bubble'] ?? true,
+            'supports_attachments' => $providers->supportsAttachments(),
         ]);
     }
 
@@ -68,13 +70,23 @@ class AssistantController
 
         abort_unless($providers->configured(), 422, 'No AI provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY.');
 
-        $validated = $request->validate([
+        $request->validate([
             'messages' => ['required', 'array', 'max:40'],
             'messages.*.role' => ['required', 'in:user,assistant'],
-            'messages.*.content' => ['required', 'string', 'max:20000'],
+            'messages.*.content' => ['required'],
             'context' => ['sometimes', 'array'],
             'context.entry_id' => ['sometimes', 'string', 'max:64'],
         ]);
+
+        $validated = [
+            'messages' => collect($request->input('messages'))
+                ->map(fn (array $message) => [
+                    'role' => $message['role'],
+                    'content' => $this->validateMessageContent($message['content'] ?? null, $providers),
+                ])
+                ->all(),
+            'context' => $request->input('context', []),
+        ];
 
         if ($request->header('Accept') === 'text/event-stream') {
             return $this->streamChat($assistant, $validated);
@@ -133,6 +145,71 @@ class AssistantController
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
         ]);
+    }
+
+    /**
+     * A message's content is either a plain string, or — for a provider
+     * with attachment support — an array of Anthropic-shaped content
+     * blocks (text / document). Rebuilt from validated fields only; the
+     * client's raw array is never passed through as-is.
+     *
+     * @return string|array<int, array<string, mixed>>
+     */
+    protected function validateMessageContent(mixed $content, ProviderManager $providers): string|array
+    {
+        if (is_string($content)) {
+            abort_unless(mb_strlen($content) <= 20000, 422, 'Message is too long.');
+
+            return $content;
+        }
+
+        abort_unless(is_array($content) && $providers->supportsAttachments(), 422, 'Attachments are not supported by the current AI provider.');
+        abort_unless(count($content) <= 2, 422, 'Too many attachments — send one file per message.');
+
+        return collect($content)
+            ->map(fn ($block) => $this->validateContentBlock($block))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function validateContentBlock(mixed $block): array
+    {
+        abort_unless(is_array($block), 422, 'Invalid message content.');
+
+        if (($block['type'] ?? null) === 'text') {
+            $text = $block['text'] ?? null;
+            abort_unless(is_string($text) && mb_strlen($text) <= 20000, 422, 'Message is too long.');
+
+            return ['type' => 'text', 'text' => $text];
+        }
+
+        abort_unless(($block['type'] ?? null) === 'document', 422, 'Invalid message content.');
+
+        $mediaType = $block['source']['media_type'] ?? null;
+        abort_unless($mediaType === 'application/pdf', 422, 'Only PDF attachments are supported.');
+
+        $data = $block['source']['data'] ?? null;
+        abort_unless(is_string($data) && $data !== '', 422, 'Attachment data is missing.');
+
+        $decoded = base64_decode($data, true);
+        abort_unless($decoded !== false && strlen($decoded) > 0, 422, 'Attachment data is invalid.');
+        abort_unless(strlen($decoded) <= 10 * 1024 * 1024, 422, 'PDF attachments are limited to 10MB.');
+
+        $title = $block['title'] ?? null;
+
+        return array_filter([
+            'type' => 'document',
+            'source' => [
+                'type' => 'base64',
+                'media_type' => 'application/pdf',
+                'data' => $data,
+            ],
+            'title' => is_string($title) ? mb_substr($title, 0, 200) : null,
+            'cache_control' => ['type' => 'ephemeral'],
+        ], fn ($value) => $value !== null);
     }
 
     protected function apiErrorMessage(\Throwable $exception): string

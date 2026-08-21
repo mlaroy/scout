@@ -103,4 +103,19 @@ class ProviderManagerTest extends TestCase
 
         $this->assertInstanceOf(AnthropicAssistantClient::class, $providers->makeClient());
     }
+
+    public function test_only_anthropic_supports_attachments(): void
+    {
+        config(['scout-assistant.providers.anthropic.api_key' => 'anthropic-test']);
+        $this->assertTrue((new ProviderManager)->supportsAttachments());
+
+        config(['scout-assistant.providers.anthropic.api_key' => null]);
+        config(['scout-assistant.providers.openai.api_key' => 'sk-test']);
+        $this->assertFalse((new ProviderManager)->supportsAttachments());
+    }
+
+    public function test_supports_attachments_is_false_when_unconfigured(): void
+    {
+        $this->assertFalse((new ProviderManager)->supportsAttachments());
+    }
 }
